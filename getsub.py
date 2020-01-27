@@ -60,7 +60,7 @@ for i,l in enumerate(allink):
                 strr='[%d]\nserver: %s\nport: %s\nid: %s\nalterId: %s\nnet: %s\ntls: %s\npath: %s\nadd: %s\nps: %s\n'%(
                     cnt,conf['add'],conf['port'],conf['id'],conf['aid'],conf['net'],conf['tls'],conf['path'],conf['add'],conf['ps'])
             except Exception:
-                strr=conf.decode('utf-8')
+                strr='[%d]\n%s'%(cnt,conf.decode('utf-8'))
             print(strr)
             f.write(strr+'\n')
     except:
