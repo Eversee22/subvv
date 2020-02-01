@@ -36,8 +36,10 @@ if select.find('-') != -1:
     s,e=select.split('-')[0:2]
     for i in range(int(s),int(e),1):
         slist.append(i)
-else:
+elif select.find(',') != -1:
     slist=[int(i) for i in select.split(',')]
+else:
+    sys.exit(1)
 print(slist)
 
 composels=[]
