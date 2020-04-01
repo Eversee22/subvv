@@ -3,8 +3,25 @@ import sys
 import os
 import base64
 
-rootd='directory where config files exist'
-items=os.listdir(rootd)
+
+rootd='config\\subscriptions'
+if not os.path.exists(rootd) or not os.path.isdir(rootd):
+	print('The directory "%s" is invalid.'%rootd)
+	sys.exit(1)
+subs=[i for i in os.listdir(rootd) if os.path.isdir(os.path.join(rootd,i))]
+if len(subs)==0:
+	sys.exit(1)
+for ind,i in enumerate(subs):
+	print('[%d] %s'%(ind,i))
+	
+try:
+	c=int(input('choose(0,1,2,...): '))
+	if c<0 or c>=len(subs):
+		print('out of range[0,%d)'%(len(subs)))
+		sys.exit(1)
+except Exception as e:
+	sys.exit(1)
+items=os.listdir(os.path.join(rootd,subs[c]))
 print(len(items))
 itemsdict={}
 for i in items:
