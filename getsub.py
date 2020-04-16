@@ -65,7 +65,8 @@ net: %s\ntls: %s\npath: %s\nhost: %s\nps: %s\n'\
                     % (cnt,t['add'],t['port'],t['id'],t['aid'],
                     t['net'],t['tls'],t['path'],t['host'],t['ps'])
                 except Exception:
-                    t2=t.decode('utf-8')
+                    # t2=t.decode('utf-8')
+					t2='[%d]\n'%cnt+str(t)
                 print(t2)
                 f.write(t2+'\n')
             except Exception as e:
