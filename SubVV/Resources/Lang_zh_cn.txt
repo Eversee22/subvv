@@ -1,0 +1,24 @@
+﻿# 中文
+
+#Form1
+URL:=订阅地址:
+Add=添加
+Update=更新订阅
+Remove=移除
+Save=保存
+Exit=退出
+Server List=服务器列表
+Subscription List=订阅列表:
+Server Information=服务器信息
+Address:=地址:
+UserId:=用户ID:
+AlterId:=额外ID数:
+Level:=等级:
+Method:=加密方法:
+Net:=网络类型:
+Path:=路径:
+Host:=头部Host:
+#TLS:=传输层加密:
+Remark:=备注:
+
+
