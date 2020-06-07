@@ -7,14 +7,16 @@ DBG = False
 
 def parsedata(data):
     schemedata = {}
-    # pre = 'dm1lc3M6'
-    # if data.find(pre) == -1:
-    #     print('Not Vmess Encoding')
-    #     return schemedata
+    data = data.strip()      \
+        .replace('\n', '')   \
+        .replace('\r\n', '') \
+        .replace('\r', '')   \
+        .replace(' ','')
+    
     datalen = len(data)
     print('length:', datalen)
     if len(data) % 4 != 0:
-        data += '=' * ((datalen // 4 + 1) * 4 - datalen)
+        data += '=' * (datalen + 4 - datalen%4)
     try:
         data2 = base64.urlsafe_b64decode(data)
         items = data2.split(b'\n')
