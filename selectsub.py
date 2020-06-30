@@ -3,6 +3,7 @@ import getsub
 import sys
 import json
 import base64
+from urllib import parse
 
 
 def arg_parse():
@@ -17,65 +18,37 @@ def arg_parse():
     parser.add_argument('-l', dest='lbak', action="store_true", default=False,
                         help='list subscriptions in "bakf"')
     parser.add_argument('-b', dest='bakf', default='baksubs',
-                        help='backup file of subscriptions(many,(url,b64code) each line))')
+                        help='backup file of subscriptions((url,b64code) each line)')
+    parser.add_argument('-type', dest='type', default="vm", help='subscription type(vmess,trojan,all)')
 
     return parser.parse_args()
 
-
-if __name__ == '__main__':
-    args = arg_parse()
-    url = args.url
-    ib64f = args.ib64f
-    bakf = args.bakf
-    ibak = args.ibak
-    ibaku = args.ibaku
-    # lbak = args.lbak
-
-    if args.lbak:
-        with open(bakf) as f:
-            lines = f.readlines()
-            for i, it in enumerate(lines):
-                print(i, it[:it.find(',')])
-        sys.exit(0)
-
-    if url is not None:
-        schemesubs = getsub.getsuburl(url, bakf)
-    elif ib64f is not None:
-        schemesubs = getsub.getsubfile(ib64f)
-    else:
-        with open(bakf) as f:
-            lines = f.readlines()
-            if ibaku is not None:
-                schemesubs = getsub.getsuburl(lines[ibaku].strip().split(',')[0], bakf)
-            else:
-                schemesubs = getsub.getsubraw(lines[ibak].strip().split(',')[1])
-    if "vmess" not in schemesubs:
-        print("no vmess subscriptions")
-        sys.exit(1)
-    subs = schemesubs["vmess"]
+def listsubs(subs, names):
     itemsdict = {}
-    print("subs number:", len(subs))
+    print("subs number:", len(names))
     # sort subs via 'ps'
     subnamesi = {}
     subnames = []
-    for i in range(len(subs)):
-        subnamesi[subs[i]['ps']] = i
-        subnames.append(subs[i]['ps'])
+    for i in range(len(names)):
+        subnamesi[names[i]] = i
+        subnames.append(names[i])
     subnames.sort()
     t = []
     for name in subnames:
         t.append(subs[subnamesi[name]])
     subs = t
-    for i, s in enumerate(subs):
-        name = s['ps']
-        key = name[:2]
-        if key in itemsdict.keys():
-            itemsdict[key].append(name)
-        else:
+    for i, s in enumerate(names):
+        name = s
+        key = name[:5]
+        if itemsdict.get(key) is None:
             itemsdict[key] = [name]
+        else:
+            itemsdict[key].append(name)
     row, col = 6, 3
     i = 0
-    for k in itemsdict:
+    keys = list(itemsdict.keys())
+    keys.sort()
+    for k in keys:
         print('--' + k + '--')
         vs = itemsdict[k]
         j = 0
@@ -85,10 +58,12 @@ if __name__ == '__main__':
                 end = '\n'
             else:
                 end = '  '
-            print('[%d] ' % i + v, end=end)
+            print(('[%d] ' % i) + v, end=end)
             i += 1
         print()
+    return subs
 
+def selectsubs():
     select = input('select(ie: 0,1,2,...;0-3): ')
     slist = []
     if select.find('-') != -1:
@@ -104,8 +79,19 @@ if __name__ == '__main__':
         except Exception:
             sys.exit(1)
     print(slist)
+    
+    return slist
+    
+def writesubs(fname, composels):
+    if len(composels) > 0:
+        composition = b'\n'.join(composels)
+        fncomp = base64.b64encode(composition).decode('ascii')
+        with open(fname, 'w') as f:
+            f.write(fncomp)
+        tmpf.write(fncomp)
+
+def makevmsubs2(subs, slist):
     composels = []
-    f = open('tmp', 'w', encoding='utf-8')
     pattern = {"add": "", "aid": 0, "host": "", "id": "", "net": "", "path": "", "port": 0,
                "ps": "", "tls": "", "v": 2}
 
@@ -138,12 +124,108 @@ if __name__ == '__main__':
             print('ok')
         confs = json.dumps(conf, ensure_ascii=False, separators=(',', ':'))  # dict to string
         composels.append(b'vmess://' + base64.b64encode(bytes(confs, 'utf-8')))
-        f.write(confs + '\n')
+        tmpf.write(confs + '\n')
+    
+    return composels
 
-    if len(composels) > 0:
-        composition = b'\n'.join(composels)
-        fncomp = base64.b64encode(composition).decode('ascii')
-        with open('vtemp', 'w') as vf:
-            vf.write(fncomp)
-        f.write(fncomp)
+def makevmpre():
+    subs = schemesubs["vmess"]
+    names = []
+    for sub in subs:
+        names.append(sub['ps'])
+    subs = listsubs(subs, names)
+    slist = selectsubs()
+    
+    return subs, slist
+    
+def makevmsubs():
+    if schemesubs.get('vmess') is None:
+       print("no vmess subscriptions")
+       sys.exit(1)
+    subs, slist = makevmpre()
+    composels = makevmsubs2(subs, slist)
+    
+    writesubs('vtemp', composels)
+
+def maketrsubs2(subs, slist):
+    composels = []
+    for i in slist:
+        if i<0 or i>=len(subs):
+            print(i, 'out range')
+            continue
+        composels.append(b'trojan://' + bytes(subs[i], 'utf-8'))
+        tmpf.write(subs[i] + '\n')
+    
+    return composels
+
+def maketrpre():
+    subs = schemesubs['trojan']
+    names = []
+    for sub in subs:
+        urlname = parse.unquote(sub[sub.find('#')+1:])
+        names.append(urlname)
+    subs = listsubs(subs, names)
+    slist = selectsubs()
+    
+    return subs, slist
+    
+def maketrsubs():
+    if schemesubs.get('trojan') is None:
+        print("no trojan subscriptions")
+        sys.exit(1)
+    subs, slist = maketrpre()
+    composels = maketrsubs2(subs, slist)
+    
+    writesubs('trtemp', composels)
+
+def makesubs():
+    typenames = ['vmess', 'trojan']
+    composels = []
+    for name in typenames:
+        if name == 'vmess':
+            subs, slist = makevmpre()
+            comps = makevmsubs2(subs, slist)
+        elif name == 'trojan':
+            subs, slist = maketrpre()
+            comps = maketrsubs2(subs, slist)
+        composels.extend(comps)
+    
+    writesubs('mixtemp', composels)
+    
+if __name__ == '__main__':
+    args = arg_parse()
+    url = args.url
+    ib64f = args.ib64f
+    bakf = args.bakf
+    ibak = args.ibak
+    ibaku = args.ibaku
+    stype = args.type
+    # lbak = args.lbak
+
+    if args.lbak:
+        with open(bakf) as f:
+            lines = f.readlines()
+            for i, it in enumerate(lines):
+                print(i, it[:it.find(',')])
+        sys.exit(0)
+
+    if url is not None:
+        schemesubs = getsub.getsuburl(url, bakf)
+    elif ib64f is not None:
+        schemesubs = getsub.getsubfile(ib64f)
+    else:
+        with open(bakf) as f:
+            lines = f.readlines()
+            if ibaku is not None:
+                schemesubs = getsub.getsuburl(lines[ibaku].strip().split(',')[0], bakf)
+            else:
+                schemesubs = getsub.getsubraw(lines[ibak].strip().split(',')[1])
+    tmpf = open('tmp', 'w', encoding='utf-8')
+    if stype == "vm":
+        makevmsubs()
+    elif stype == "tr":
+        maketrsubs()
+    elif stype == "all":
+        makesubs()
+    tmpf.close()
     print('over')

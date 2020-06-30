@@ -7,16 +7,10 @@ DBG = False
 
 def parsedata(data):
     schemedata = {}
-    data = data.strip()      \
-        .replace('\n', '')   \
-        .replace('\r\n', '') \
-        .replace('\r', '')   \
-        .replace(' ','')
-    
     datalen = len(data)
     print('length:', datalen)
-    if len(data) % 4 != 0:
-        data += '=' * (datalen + 4 - datalen%4)
+    if datalen % 4 != 0:
+        data += '=' * (4 - datalen % 4 )
     try:
         data2 = base64.urlsafe_b64decode(data)
         items = data2.split(b'\n')
@@ -30,34 +24,39 @@ def parsedata(data):
             p = i.find(b':')
             scheme = i[:p].decode().lower()
             t = i[p+3:]
-            if scheme != "vmess":
-                strt = t.decode("utf-8")
-                print(scheme+"://"+strt)
-                if scheme in schemedata:
-                    schemedata[scheme].append(strt)
+            if scheme == "trojan":
+                trlink = t.decode("utf-8")
+                # print(scheme+"://"+trlink)
+                if schemedata.get(scheme) is None:
+                    schemedata[scheme] = [trlink]
                 else:
-                    schemedata[scheme] = [strt]
-                continue
-
-            try:
-                t = base64.b64decode(t)
+                    schemedata[scheme].append(trlink)
+                    
+            elif scheme == "vmess":
+                vmlink = base64.b64decode(t)
                 try:
-                    t = json.loads(t)
-                    if scheme in schemedata:
-                        schemedata[scheme].append(t)
+                    conf = json.loads(vmlink)
+                    if schemedata.get(scheme) is None:
+                        schemedata[scheme] = [conf]
                     else:
-                        schemedata[scheme] = [t]
-                    t2 = '[%d]\nserver: %s\nport: %s\nid: %s\nalterId: %s\n' \
+                        schemedata[scheme].append(conf)
+                    conff = '[%d]\nserver: %s\nport: %s\nid: %s\nalterId: %s\n' \
                          'net: %s\ntls: %s\npath: %s\nhost: %s\nps: %s\n' \
-                         % (cnt, t['add'], t['port'], t['id'], t['aid'],
-                            t['net'], t['tls'], t['path'], t['host'], t['ps'])
+                         % (cnt, conf['add'], conf['port'], conf['id'], conf['aid'],
+                            conf['net'], conf['tls'], conf['path'], conf['host'], conf['ps'])
                 except Exception as e:
                     print("Json Read Error", e)
-                    t2 = '[%d]\n' % cnt + str(t)
+                    conff = ('[%d]\n' % cnt) + str(vmlink)
                 if DBG:
-                    print(t2)
-            except Exception as e:
-                print("#%d" % cnt, "Decoding Error", e)
+                    print(conff)
+            else:
+                strt = t.decode("utf-8")
+                print(scheme+"://"+strt)
+                if schemedata.get(scheme) is None:
+                    schemedata[scheme] = [strt]
+                else:
+                    schemedata[scheme].append(strt)
+                    
     return schemedata
 
 
