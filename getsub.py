@@ -1,11 +1,13 @@
 import base64
 import json
 import requests
+from urllib import parse
 
 DBG = False
 
 
 def parsedata(data):
+    fconf = open("confs", "w", encoding='utf-8')
     schemedata = {}
     datalen = len(data)
     print('length:', datalen)
@@ -31,11 +33,14 @@ def parsedata(data):
                     schemedata[scheme] = [trlink]
                 else:
                     schemedata[scheme].append(trlink)
+                name = parse.unquote(trlink[trlink.find('#')+1:])
+                fconf.write('tr '+name+' '+trlink+'\n')
                     
             elif scheme == "vmess":
                 vmlink = base64.b64decode(t)
                 try:
                     conf = json.loads(vmlink)
+                    fconf.write('vm,'+conf['ps']+','+json.dumps(conf, ensure_ascii=False, separators=(',', ':'))+'\n')
                     if schemedata.get(scheme) is None:
                         schemedata[scheme] = [conf]
                     else:
@@ -55,10 +60,9 @@ def parsedata(data):
                 if schemedata.get(scheme) is None:
                     schemedata[scheme] = [strt]
                 else:
-                    schemedata[scheme].append(strt)
-                    
+                    schemedata[scheme].append(strt)                 
+    fconf.close()
     return schemedata
-
 
 def getsuburl(url, bkfile=None):
     print(url)

@@ -20,7 +20,7 @@ def arg_parse():
     parser.add_argument('-b', dest='bakf', default='baksubs',
                         help='backup file of subscriptions((url,b64code) each line)')
     parser.add_argument('-type', dest='type', default="vm", help='subscription type(vmess,trojan,all)')
-
+    parser.add_argument('-conf', dest='conf', help='file of configs formatted')
     return parser.parse_args()
 
 def listsubs(subs, names):
@@ -37,8 +37,7 @@ def listsubs(subs, names):
     for name in subnames:
         t.append(subs[subnamesi[name]])
     subs = t
-    for i, s in enumerate(names):
-        name = s
+    for name in subnames:
         key = name[:5]
         if itemsdict.get(key) is None:
             itemsdict[key] = [name]
@@ -192,6 +191,27 @@ def makesubs():
     
     writesubs('mixtemp', composels)
     
+def getsubconf(filename): 
+    with open(filename, encoding='utf-8') as f:
+        lines = f.readlines()
+        lines = [line.strip() for line in lines]
+        lines = [line for line in lines if len(line)>0 and line[0]!='#']
+        bconfs = []
+        for line in lines:
+            i = line.find(',')
+            scheme = line[:i]
+            conf = line[i+1:]
+            i = conf.find(',')
+            name = conf[:i]
+            conf = conf[i+1:]
+            print(scheme, name)
+            if scheme == 'tr':
+                bconfs.append(b'trojan://' + bytes(conf, 'utf-8'))
+            elif scheme == 'vm':
+                bconfs.append(b'vmess://' + base64.b64encode(bytes(conf, 'utf-8')))
+        writesubs(filename+'temp', bconfs)
+                
+    
 if __name__ == '__main__':
     args = arg_parse()
     url = args.url
@@ -201,6 +221,7 @@ if __name__ == '__main__':
     ibaku = args.ibaku
     stype = args.type
     # lbak = args.lbak
+    conff = args.conf
 
     if args.lbak:
         with open(bakf) as f:
@@ -208,9 +229,14 @@ if __name__ == '__main__':
             for i, it in enumerate(lines):
                 print(i, it[:it.find(',')])
         sys.exit(0)
-
+    
+    tmpf = open('tmp', 'w', encoding='utf-8')
+    
     if url is not None:
         schemesubs = getsub.getsuburl(url, bakf)
+    elif conff is not None:
+        getsubconf(conff)
+        sys.exit(1)
     elif ib64f is not None:
         schemesubs = getsub.getsubfile(ib64f)
     else:
@@ -220,7 +246,7 @@ if __name__ == '__main__':
                 schemesubs = getsub.getsuburl(lines[ibaku].strip().split(',')[0], bakf)
             else:
                 schemesubs = getsub.getsubraw(lines[ibak].strip().split(',')[1])
-    tmpf = open('tmp', 'w', encoding='utf-8')
+    
     if stype == "vm":
         makevmsubs()
     elif stype == "tr":
