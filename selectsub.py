@@ -21,6 +21,8 @@ def arg_parse():
                         help='backup file of subscriptions((url,b64code) each line)')
     parser.add_argument('-type', dest='type', default="vm", help='subscription type(vmess,trojan,all)')
     parser.add_argument('-conf', dest='conf', help='file of configs formatted')
+    parser.add_argument('-fn', dest='fn', help='filename of output file')
+    
     return parser.parse_args()
 
 def listsubs(subs, names):
@@ -137,14 +139,14 @@ def makevmpre():
     
     return subs, slist
     
-def makevmsubs():
+def makevmsubs(filename='vtemp'):
     if schemesubs.get('vmess') is None:
        print("no vmess subscriptions")
        sys.exit(1)
     subs, slist = makevmpre()
     composels = makevmsubs2(subs, slist)
     
-    writesubs('vtemp', composels)
+    writesubs(filename, composels)
 
 def maketrsubs2(subs, slist):
     composels = []
@@ -152,7 +154,14 @@ def maketrsubs2(subs, slist):
         if i<0 or i>=len(subs):
             print(i, 'out range')
             continue
-        composels.append(b'trojan://' + bytes(subs[i], 'utf-8'))
+        sub = subs[i]
+        urlname = parse.unquote(sub[sub.find('#')+1:])
+        name = input('rename %s ? '% urlname)
+        if len(name) != 0:
+            sub = sub.replace(parse.quote(urlname), parse.quote(name))
+            if parse.unquote(sub[sub.find('#')+1:]) == name:
+                print('renamed')
+        composels.append(b'trojan://' + bytes(sub, 'utf-8'))
         tmpf.write(subs[i] + '\n')
     
     return composels
@@ -168,16 +177,16 @@ def maketrpre():
     
     return subs, slist
     
-def maketrsubs():
+def maketrsubs(filename='trtemp'):
     if schemesubs.get('trojan') is None:
         print("no trojan subscriptions")
         sys.exit(1)
     subs, slist = maketrpre()
     composels = maketrsubs2(subs, slist)
     
-    writesubs('trtemp', composels)
+    writesubs(filename, composels)
 
-def makesubs():
+def makesubs(filename='mixtemp'):
     typenames = ['vmess', 'trojan']
     composels = []
     for name in typenames:
@@ -189,7 +198,7 @@ def makesubs():
             comps = maketrsubs2(subs, slist)
         composels.extend(comps)
     
-    writesubs('mixtemp', composels)
+    writesubs(filename, composels)
     
 def getsubconf(filename): 
     with open(filename, encoding='utf-8') as f:
@@ -222,6 +231,7 @@ if __name__ == '__main__':
     stype = args.type
     # lbak = args.lbak
     conff = args.conf
+    filename = args.fn
 
     if args.lbak:
         with open(bakf) as f:
@@ -248,10 +258,16 @@ if __name__ == '__main__':
                 schemesubs = getsub.getsubraw(lines[ibak].strip().split(',')[1])
     
     if stype == "vm":
-        makevmsubs()
+        if filename is None:
+            filename = 'vtemp'
+        makevmsubs(filename)
     elif stype == "tr":
-        maketrsubs()
+        if filename is None:
+            filename = 'trtemp'
+        maketrsubs(filename)
     elif stype == "all":
-        makesubs()
+        if filename is None:
+            filename = 'mixvtemp'
+        makesubs(filename)
     tmpf.close()
     print('over')
