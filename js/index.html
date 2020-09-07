@@ -1,0 +1,177 @@
+<html>
+<head>
+  <title>SubVV</title>
+  <!-- Icons & Stylesheets -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="subs.css" />
+</head>
+<body>
+  <!-- Include the library in the page -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- <script src="https://unpkg.com/marked"></script> -->
+  <script src="https://unpkg.com/moment"></script>
+
+  <!-- Subvv app -->
+  <div id="subvv">
+
+    <!-- side bar -->
+    <aside class="side-bar">
+      <div class="toolbar">
+        <button title="save all" @click="saveAll">
+          <i class="material-icons">save</i> Save All
+        </button>
+      </div>
+      <div>
+        <!-- tool bar -->
+        <div class="toolbar">
+          <button :title="addButtonTitle" @click="addSubsc">
+            <i class="material-icons">add</i> Add Subscription
+          </button>
+        </div>
+        <div class="subscs">
+            <div class="subsc" v-for="subsc of sortedSubscs" :class="{selected: subsc == selectedSubsc}" @click="selectSubsc(subsc)">
+              <i class="icon material-icons" v-if="subsc.marked">star</i>{{ subsc.title }}
+            </div>
+        </div>
+      </div>
+      <div>
+        <!-- tool bar -->
+        <div class="toolbar">
+          <button :title="addUserButtonTitle" @click="addUser">
+            <i class="material-icons">add</i> Add User
+          </button>
+        </div>
+        <div class="users">
+            <div class="user" v-for="user of users" :class="{selected: user == selectedUser}" @click="selectUser(user)">
+              <i class="icon material-icons">person_outline</i>{{ user.name }}
+            </div>
+        </div>
+      </div>
+    </aside>
+
+    <template v-if="selectedSubsc">
+
+      <!-- Main pane -->
+      <section class="main">
+        <div class="toolbar">
+          <input v-model="selectedSubsc.title" placeholder="Subscription title" />
+          <input v-model="selectedSubsc.url" placeholder="Subscription url" />
+          <button @click="updateSubsc" title="Update subscription">
+            <i class="material-icons">update</i>
+          </button>
+          <button @click="markSubsc" title="Mark subscription">
+            <i class="material-icons">{{ selectedSubsc.marked ? 'star' : 'star_border' }}</i>
+          </button>
+          <button @click="removeSubsc" title="Remove subscription">
+              <i class="material-icons">delete</i>
+          </button>
+        </div>
+        <!-- <textarea v-model="selectedSubsc.content"></textarea> -->
+        <div class="subscs">
+            <div class="subsc" v-for="e in selectedSubsc.content">
+              <div>
+                <strong>{{e.type}} </strong>
+                <button @click="markSubscItem(e)" title="Mark subscription item">
+                  <i class="material-icons">{{e.selected ? 'check_box' : 'check_box_outline_blank'}}</i>
+                </button>
+              </div>
+              <div v-for="(value, key) in e.value">
+                <span>
+                  <span>{{key}}: </span>
+                  <span>{{value}}</span>
+                </span>
+              </div>
+            </div>
+        </div>
+        <div class="toolbar status-bar">
+          <span class="date">
+            <span class="label">Created</span>
+            <span class="value">{{ selectedSubsc.created | date }}</span>
+          </span>
+          <span class="date">
+            <span class="label">Updated</span>
+            <span class="value">{{ selectedSubsc.updated | date }}</span>
+          </span>
+          <span class="lines">
+            <span class="label">Number of items</span>
+            <span class="value">{{ subscItemsCount }}</span>
+          </span>
+        </div>
+      </section>
+
+      <!-- Preview pane -->
+      <!-- <aside class="preview" v-html="subscPreview">
+      </aside> -->
+    </template>
+  
+    <template v-if="selectedUser">
+    <section class="main">
+        <div class="toolbar">
+          <input v-model="selectedUser.name" placeholder="Username" />
+          <input v-model="selectedUser.subscId"/>
+          <button @click="generateSid" title="Generate subscription id">
+            <i class="material-icons">redo</i>
+          </button>
+          <button @click="removeUser" title="Remove User">
+              <i class="material-icons">delete</i>
+          </button>
+          <button @click="restoreUserSubscs" title="Restore subscriptions">
+            <i class="material-icons">cached</i>
+          </button>
+          <!-- <button @click="encodeUserItems" title="Encode selected items">
+            <i class="material-icons">redo</i>
+          </button> -->
+          <button @click="upload" title="Upload user">
+            <i class="material-icons">arrow_upward</i>
+          </button>
+        </div>
+        <div class="subscs">
+          <div class="subsc" v-for="e in selectedUser.selectedItems">
+            <div>
+              <strong>{{e.type}} </strong>
+              <button @click="markUserSubscItem(e)" title="Mark subscription item">
+                <i class="material-icons">{{e.selected ? 'check_box' : 'check_box_outline_blank'}}</i>
+              </button>
+            </div>
+            <div v-for="(value, key) in e.value">
+              <span class="key-value">
+                <span class="label">{{key}}: </span>
+                <span class="value"><input v-model="e.value[key]"></span>
+                <!-- <span class="blank"></span> -->
+              </span>
+            </div>
+          </div>
+      </div>
+      <!-- <div> -->
+        <input :value="selectedUserUuid" @input="onUserIdChange($event)" />
+      <!-- </div> -->
+      <template v-if="selectedUser.encStr">
+        <!-- <span class="label" style="background: #40b883">
+        </span> -->
+        <button @click="upload2Serv" title="Upload to server">
+          <i class="material-icons">cloud_upload</i>
+        </button>
+        <textarea v-model="selectedUser.encStr" readonly="true"></textarea>
+      </template>
+      <div class="toolbar status-bar">
+        <span class="date">
+          <span class="label">Created</span>
+          <span class="value">{{ selectedUser.created | date }}</span>
+        </span>
+        <span class="lines">
+          <span class="label">Number of items</span>
+          <span class="value">{{ selectedUser.selectedItems.length }}</span>
+        </span>
+        <span class="lines">
+          <span class="label">Length of encoded</span>
+          <span class="value">{{ selectedUser.encStr.length }}</span>
+        </span>
+      </div>
+    </section>
+    </template>
+  </div>
+
+  <!-- Some JavaScript -->
+  <script src="subs.js"></script>
+</body>
+</html>
