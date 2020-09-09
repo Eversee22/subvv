@@ -14,6 +14,8 @@ function generateId(len) {
 
 function parseUrl(url) {
     let ind = url.indexOf('?')
+    if (ind === -1)
+        return {'url': url}
     let rawurl = url.substring(0,ind)
     let params = url.substring(ind+1)
     let paramobj = {'url': rawurl}
