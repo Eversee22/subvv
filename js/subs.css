@@ -196,5 +196,11 @@ body {
     width: 20px;
   }
 
+  #subscs-sl {
+    background: #f0f9f5;
+    height: 30%;
+    flex: auto 1 0;
+  }
+
 
   

@@ -83,6 +83,22 @@
               </div>
             </div>
         </div>
+        <div class="subscs" id="subscs-sl" v-if="selectedItems.length>0">
+          <div class="subsc" v-for="e in selectedItems">
+            <div>
+              <strong>{{e.type}} </strong>
+              <button @click="addSubscItem(e)" title="Add the item to user">
+                <i class="material-icons">add</i>
+              </button>
+            </div>
+            <div v-for="(value, key) in e.value">
+              <span>
+                <span>{{key}}: </span>
+                <span>{{value}}</span>
+              </span>
+            </div>
+          </div>
+        </div>
         <div class="toolbar status-bar">
           <span class="date">
             <span class="label">Created</span>
@@ -115,9 +131,9 @@
           <button @click="removeUser" title="Remove User">
               <i class="material-icons">delete</i>
           </button>
-          <button @click="restoreUserSubscs" title="Restore subscriptions">
+          <!-- <button @click="restoreUserSubscs" title="Restore subscriptions">
             <i class="material-icons">cached</i>
-          </button>
+          </button> -->
           <!-- <button @click="encodeUserItems" title="Encode selected items">
             <i class="material-icons">redo</i>
           </button> -->

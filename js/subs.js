@@ -97,7 +97,8 @@ new Vue({
             selectedId: localStorage.getItem('selected-id') || null,
             selectedItems: [],
             users: [],
-            selectedUserId: localStorage.getItem('selected-userid') || null
+            selectedUserId: localStorage.getItem('selected-userid') || null,
+            // selectedItem: null
             // info: ''
         }
     },
@@ -206,7 +207,7 @@ new Vue({
                 name: 'New user '+(this.users.length + 1),
                 subscId: generateId(16),
                 created: time,
-                selectedItems: JSON.parse(JSON.stringify(this.selectedItems)),
+                selectedItems: [],
                 encStr: ''
             }
             this.users.push(user)
@@ -275,6 +276,10 @@ new Vue({
                 this.removeSubscItem(item)
             }
         },
+        addSubscItem(item) {
+            if (this.selectedUser != null)
+                this.selectedUser.selectedItems.push(JSON.parse(JSON.stringify(item)))
+        },
         markUserSubscItem(item) {
             item.selected ^= true
             const selectedItems = this.selectedUser.selectedItems
@@ -286,9 +291,9 @@ new Vue({
                     selectedItems.splice(index, 1)
             }
         },
-        restoreUserSubscs() {
-            this.selectedUser.selectedItems = JSON.parse(JSON.stringify(this.selectedItems))
-        },
+        // restoreUserSubscs() {
+        //     this.selectedUser.selectedItems = JSON.parse(JSON.stringify(this.selectedItems))
+        // },
         async updateSubsc() {
             const subsc = this.selectedSubsc
             if (!subsc.url){
