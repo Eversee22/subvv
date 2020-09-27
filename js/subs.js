@@ -176,8 +176,19 @@ new Vue({
             const items = this.selectedUser.selectedItems
             if (items.length === 0)
                 return null
-            else 
-                return items[0].value.id
+            else {
+                const item = items[0]
+                if (item.type === 'clash') {
+                    if (item.value.type === 'trojan')
+                        return item.value.password
+                    else if (item.value.type === 'vmess')
+                        return item.value.uuid
+                    else 
+                        return null
+                } else {
+                    return item.value.id
+                }
+            }  
         }  
     },
 
@@ -347,7 +358,16 @@ new Vue({
             // console.log('user id changed: '+id)
             const items = this.selectedUser.selectedItems
             for (const item of items) {
-                item.value.id = id
+                if (item.value.id != null){
+                    item.value.id = id
+                } else {
+                    if (item.type === 'clash'){
+                        if (item.value.type === 'trojan')
+                            item.value.password = id
+                        else if (item.value.type === 'vmess')
+                            item.value.uuid = id
+                    }
+                }
             }
         },
         generateSid() {

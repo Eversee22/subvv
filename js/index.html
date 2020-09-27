@@ -49,10 +49,11 @@
       </div>
     </aside>
 
-    <template v-if="selectedSubsc">
+    <!-- <template v-if="selectedSubsc"> -->
 
       <!-- Main pane -->
       <section class="main">
+        <template v-if="selectedSubsc">
         <div class="toolbar">
           <input v-model="selectedSubsc.title" placeholder="Subscription title" />
           <input v-model="selectedSubsc.url" placeholder="Subscription url" />
@@ -83,6 +84,7 @@
               </div>
             </div>
         </div>
+        </template>
         <div class="subscs" id="subscs-sl" v-if="selectedItems.length>0">
           <div class="subsc" v-for="e in selectedItems">
             <div>
@@ -99,6 +101,7 @@
             </div>
           </div>
         </div>
+        <template v-if="selectedSubsc">
         <div class="toolbar status-bar">
           <span class="date">
             <span class="label">Created</span>
@@ -113,6 +116,7 @@
             <span class="value">{{ subscItemsCount }}</span>
           </span>
         </div>
+        </template>
       </section>
 
       <!-- Preview pane -->
